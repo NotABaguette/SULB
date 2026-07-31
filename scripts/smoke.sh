@@ -66,7 +66,7 @@ DAEMON_PID=$!
 sleep 2
 
 fetch() { curl -sf --socks5-hostname 127.0.0.1:$SOCK_PORT "http://10.255.255.1/test.bin" -o /tmp/sulb-out.bin; }
-current_link() { curl -sf "http://127.0.0.1:$STATUS_PORT/status" | grep -o '"name": *"'"$1"'"' | head -1; }
+current_link() { curl -sf "http://127.0.0.1:$STATUS_PORT/status" | grep -o '"socks": *"'"$1"'"' | head -1; }
 
 echo "== phase 1: link a serves (bandwidth probe makes it score higher) =="
 fetch

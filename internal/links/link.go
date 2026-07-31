@@ -38,15 +38,15 @@ func (s State) String() string {
 
 // Snapshot is a consistent read of a link's runtime state.
 type Snapshot struct {
-	Name           string
-	Type           string
-	State          State
-	Score          float64
-	Latency        time.Duration
-	Loss           float64
-	Bandwidth      float64
-	BandwidthValid bool
-	RoutingOK      bool
+	Name           string        `json:"name"`
+	Type           string        `json:"type"`
+	State          State         `json:"state"`
+	Score          float64       `json:"score"`
+	Latency        time.Duration `json:"latency"`
+	Loss           float64       `json:"loss"`
+	Bandwidth      float64       `json:"bandwidth"`
+	BandwidthValid bool          `json:"bandwidth_valid"`
+	RoutingOK      bool          `json:"routing_ok"`
 }
 
 type Link struct {
