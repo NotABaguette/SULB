@@ -18,6 +18,11 @@ forward into a VPN (`type: router`, routes re-pointed to the best router).
 Point apps at `10.66.66.1:1080` (SOCKS5) or route traffic into the TUN.
 Status: `curl http://127.0.0.1:8080/status`.
 
+## Guides
+
+- [Quickstart](docs/quickstart.md) — install, per-OS setup, service config, troubleshooting
+- [Config reference](docs/config-reference.md) — every key, the scoring math, examples
+
 ## Config
 
 See `sulb.yaml`. Per-link weights (`weights: {latency, loss, bandwidth}`)
