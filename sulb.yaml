@@ -1,0 +1,42 @@
+entry:
+  tun_name: sulb0
+  tun_ip: 10.66.66.1
+  tun_net: 24
+  mtu: 1500
+  socks_listen: 10.66.66.1:1080
+
+scoring:
+  ewma_alpha: 0.3
+  hysteresis: 0.10
+  stick_time: 15s
+  latency_best: 10ms
+  latency_worst: 300ms
+  bandwidth_cap: 10485760
+  floor: 0
+
+status:
+  listen: 127.0.0.1:8080
+
+links:
+  - name: vpn-a
+    type: socks5
+    endpoint: 127.0.0.1:1081
+    weights: {latency: 0.5, loss: 0.2, bandwidth: 0.3}
+    probe:
+      targets: [{host: 1.1.1.1, port: 443}, {host: 8.8.8.8, port: 53}]
+      interval: 5s
+      timeout: 2s
+      fail_threshold: 3
+      recover_threshold: 2
+      loss_window: 10
+    bandwidth_probe: {enable: true, bytes: 524288, interval: 60s}
+
+  - name: vpn-b
+    type: socks5
+    endpoint: 127.0.0.1:1082
+    weights: {latency: 0.5, loss: 0.2, bandwidth: 0.3}
+
+  - name: router-1
+    type: router
+    gateway: 192.168.1.2
+    routes: [0.0.0.0/0]
