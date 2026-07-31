@@ -85,7 +85,14 @@ echo "ok: failover to b"
 echo "== phase 3: restore a -> switch back =="
 /tmp/fakesocks -listen 127.0.0.1:$A_PORT -dest 127.0.0.1:$TARGET_PORT >/dev/null 2>&1 &
 A_PID=$!
-sleep 6
+# Switch-back depends on probe + bandwidth-probe cadence and EWMA settling
+# (~7-8s). Selection only happens on traffic, so each poll iteration must
+# generate a flow through the balancer — that's what triggers the re-pick.
+for _ in $(seq 1 20); do
+  fetch 2>/dev/null || true
+  [ -n "$(current_link a)" ] && break
+  sleep 1
+done
 fetch
 cmp -s /tmp/sulb-out.bin "$TARGET_DIR/test.bin" || { echo "phase 3: payload mismatch"; exit 1; }
 [ -n "$(current_link a)" ] || { echo "phase 3: a should be picked again"; exit 1; }
