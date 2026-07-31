@@ -85,9 +85,11 @@ func TestLatencyEwmaSmoothsSpike(t *testing.T) {
 func TestScoreUpdateAndDegraded(t *testing.T) {
 	l := testLink(t, "a", "direct", "")
 	l.SetFloor(30)
+	// No renormalization: without bandwidth, perfect latency+loss caps at
+	// (0.5*100 + 0.2*100)/1.0 = 70.
 	l.UpdateScore(score.Metrics{Latency: 10 * time.Millisecond, LatencyValid: true, Loss: 0})
-	if s := l.Snapshot(); s.Score < 99 {
-		t.Fatalf("near-perfect metrics should score ~100: got %v", s.Score)
+	if s := l.Snapshot(); s.Score < 69 || s.Score > 71 {
+		t.Fatalf("perfect latency+loss should score 70: got %v", s.Score)
 	}
 	// EWMA decays, not jumps: 100 -> 70 -> 49 after repeated terrible
 	// updates (alpha 0.3).
@@ -141,6 +143,18 @@ func TestDialDirect(t *testing.T) {
 	var b [1]byte
 	if _, err := c.Read(b[:]); err != nil || b[0] != 0x42 {
 		t.Fatalf("echo: got %x err %v", b, err)
+	}
+}
+
+func TestScoreIncludesStoredBandwidth(t *testing.T) {
+	// Regression: bandwidth is stored by the bandwidth-probe loop and must
+	// be merged into the scored metrics (or the score caps at 70 and a
+	// bandwidth-proven link can never beat an unmeasured one).
+	l := testLink(t, "a", "direct", "")
+	l.SetBandwidth(9<<20, true) // 90% of cap
+	l.UpdateScore(score.Metrics{Latency: 10 * time.Millisecond, LatencyValid: true, Loss: 0})
+	if s := l.Snapshot(); s.Score < 90 {
+		t.Fatalf("bandwidth must lift the score: got %v", s.Score)
 	}
 }
 

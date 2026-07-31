@@ -45,15 +45,12 @@ func Score(m Metrics, w Weights, n Norm) float64 {
 	if m.BandwidthValid {
 		bw = clamp01(m.Bandwidth/n.BandwidthCap) * 100
 	}
-	// Renormalize over valid metrics so a missing metric (e.g. bandwidth
-	// probe disabled) doesn't drag the score down.
-	total := w.Loss
-	if m.LatencyValid {
-		total += w.Latency
-	}
-	if m.BandwidthValid {
-		total += w.Bandwidth
-	}
+	// No renormalization: an unmeasured metric contributes 0. A link
+	// without a bandwidth probe caps at (w.Latency+w.Loss) of 100 — it
+	// ranks below links with proven bandwidth, which is what we want:
+	// renormalizing lets an unmeasured link score a flat 100, and then no
+	// measured link can ever beat it by the hysteresis margin.
+	total := w.Latency + w.Loss + w.Bandwidth
 	if total <= 0 {
 		return 0
 	}

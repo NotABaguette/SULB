@@ -14,18 +14,18 @@ var norm = Norm{
 var w = Weights{Latency: 0.5, Loss: 0.2, Bandwidth: 0.3}
 
 func TestLatencyNormalization(t *testing.T) {
-	// Loss always participates in renormalization (weights sum 0.7 when
-	// bandwidth is invalid): latency 100 -> (0.5*100 + 0.2*100)/0.7 = 100;
-	// latency 0   -> (0.5*0   + 0.2*100)/0.7 = 28.57.
+	// No renormalization: missing metrics contribute 0. With bandwidth
+	// invalid, a perfect link scores (0.5*100 + 0.2*100)/1.0 = 70; an
+	// unusably slow one (0.5*0 + 0.2*100)/1.0 = 20.
 	cases := []struct {
 		ms   time.Duration
 		want float64
 	}{
-		{10 * time.Millisecond, 100},
-		{300 * time.Millisecond, 28.57},
-		{155 * time.Millisecond, 64.29},
-		{5 * time.Millisecond, 100}, // clamped
-		{10 * time.Second, 28.57},   // clamped
+		{10 * time.Millisecond, 70},
+		{300 * time.Millisecond, 20},
+		{155 * time.Millisecond, 45},
+		{5 * time.Millisecond, 70}, // clamped
+		{10 * time.Second, 20},     // clamped
 	}
 	for _, c := range cases {
 		got := Score(Metrics{Latency: c.ms, LatencyValid: true}, w, norm)
@@ -36,10 +36,11 @@ func TestLatencyNormalization(t *testing.T) {
 }
 
 func TestLossAndBandwidth(t *testing.T) {
-	// 10% loss with no latency/bandwidth valid: loss term alone, renormalized.
+	// 10% loss with no latency/bandwidth valid: loss term contributes
+	// 0.2*90 over the full weight sum -> 18.
 	got := Score(Metrics{Loss: 0.1}, w, norm)
-	if abs(got-90) > 0.01 {
-		t.Fatalf("loss-only: got %v want 90", got)
+	if abs(got-18) > 0.01 {
+		t.Fatalf("loss-only: got %v want 18", got)
 	}
 	// Bandwidth at half cap with latency valid too.
 	m := Metrics{Latency: 10 * time.Millisecond, LatencyValid: true, Loss: 0, Bandwidth: 5 << 20, BandwidthValid: true}

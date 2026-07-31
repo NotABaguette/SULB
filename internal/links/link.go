@@ -137,15 +137,16 @@ func (l *Link) RecordPassive(latency time.Duration) {
 	l.latencyMs = score.Ewma(l.latencyMs, float64(latency)/float64(time.Millisecond), l.alpha)
 }
 
-// UpdateScore recomputes the EWMA score from the latest metrics.
+// UpdateScore recomputes the EWMA score from the latest probe metrics plus
+// the bandwidth stored by the bandwidth probe (a separate loop).
 func (l *Link) UpdateScore(m score.Metrics) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
+	if l.bandwidthValid {
+		m.Bandwidth, m.BandwidthValid = l.bandwidth, true
+	}
 	raw := score.Score(m, l.weights, l.norm)
 	l.score = score.Ewma(l.score, raw, l.alpha)
-	if m.BandwidthValid {
-		l.bandwidth, l.bandwidthValid = m.Bandwidth, true
-	}
 	if l.floor > 0 {
 		if raw < l.floor && l.state == StateUp {
 			l.state = StateDegraded
@@ -199,6 +200,9 @@ func (l *Link) addRing(ok bool) {
 			w = 10
 		}
 		l.ring = make([]bool, w)
+		for i := range l.ring {
+			l.ring[i] = true // unknown history counts as healthy, not lost
+		}
 	}
 	l.ring[l.ringIdx] = ok
 	l.ringIdx = (l.ringIdx + 1) % len(l.ring)

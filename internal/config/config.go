@@ -109,9 +109,8 @@ func Load(path string) (*Config, error) {
 }
 
 func (c *Config) setDefaults() {
-	if c.Entry.TUNName == "" {
-		c.Entry.TUNName = "sulb0"
-	}
+	// TUNName is NOT defaulted: empty string disables TUN. The shipped
+	// sulb.yaml sets it explicitly. (macOS requires a utun* name.)
 	if c.Entry.TUNIP == "" {
 		c.Entry.TUNIP = "10.66.66.1"
 	}

@@ -1,5 +1,5 @@
 entry:
-  tun_name: sulb0
+  tun_name: sulb0 # empty disables TUN; macOS: utun3 or similar
   tun_ip: 10.66.66.1
   tun_net: 24
   mtu: 1500
